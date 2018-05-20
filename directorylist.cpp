@@ -59,7 +59,7 @@ mode_t directoryentry::mode() const {
  * Directory vector.
  */
 directoryvec::directoryvec() {
-
+    // ctor
 }
 
 directoryvec::~directoryvec() {
@@ -75,21 +75,23 @@ size_t directoryvec::size() const {
 /**
  * Add an entry to the directory.
  *
- * @param name
- * @param type
- * @param mode
- * @param uid
- * @param gid
- * @param size
- * @param atime
- * @param mtime
- * @param ctime
- * @return
+ * @param name      File name
+ * @param mode      stat's mode value
+ * @param uid       Files owner
+ * @param gid       Files group
+ * @param size      File size
+ * @param atime     Last access time
+ * @param mtime     Last modify time
+ * @param ctime     Last change time
+ * @return          true
  */
 bool directoryvec::add_entry(const std::string & name, mode_t mode, uid_t uid, gid_t gid, off_t size,
                              const timestruc_t & atime, const timestruc_t & mtime, const timestruc_t &  ctime) {
-    shared_direntry entry(new directoryentry(name, mode, uid, gid, size, atime, mtime, ctime));
+    shared_direntry_ptr entry(new directoryentry(name, mode, uid, gid, size, atime, mtime, ctime));
     if (entry) {
+        count_dirs += (S_ISDIR(mode))?1:0;
+        count_files += (S_ISREG(mode))?1:0;
+
         directory_vec.push_back(entry);
         return true;
     }
@@ -113,4 +115,14 @@ bool directoryvec::sort(directoryvec::compare_handler compare) {
 
 void directoryvec::clear() {
     directory_vec.clear();
+    count_files = count_dirs = 0;
+}
+
+void directoryvec::get_count(int *files, int *dirs) {
+    if (files) {
+        *files = count_files;
+    }
+    if (dirs) {
+        *dirs = count_dirs;
+    }
 }

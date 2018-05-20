@@ -27,7 +27,7 @@ std::string get_mode_string(mode_t mode) {
 
     return smode;
 }
-bool simple_callback(const shared_direntry & entry, void* ptr) {
+bool simple_callback(const shared_direntry_ptr & entry, void* ptr) {
     cout << "name " << entry->name() << " mode " << entry->mode() << endl;
     return true;
 }
@@ -42,15 +42,17 @@ int main() {
 
     timestruc_t t;
 
+    dirvec.add_entry("Abracadabra", S_IFREG, 1000, 1000, 4096, t, t, t);
     dirvec.add_entry("File #1", S_IFREG, 1000, 1000, 2048, t, t, t);
     dirvec.add_entry("File #2", S_IFREG, 1000, 1000, 4096, t, t, t);
+    dirvec.add_entry("Xasperation", S_IFREG, 1000, 1000, 4096, t, t, t);
 
-    dirvec.foreach_direntry([](const shared_direntry & a, void* ptr) {
+    dirvec.foreach_direntry([](const shared_direntry_ptr & a, void* ptr) {
         cout << "name " << a->name() << " ptr " << ptr << endl;
         return true;
     }, (void *)0xdeadbeef);
 
-    dirvec.sort([](shared_direntry a, shared_direntry b) {
+    dirvec.sort([](shared_direntry_ptr a, shared_direntry_ptr b) {
         return (b->name() < a->name());
     });
 
@@ -61,10 +63,10 @@ int main() {
     cout << "Scanning directory C:\\Users\\muman\\" << endl;
 
     enumerate_directory("C:\\Users\\muman\\", dirvec);
-    dirvec.foreach_direntry([](const shared_direntry & a, void* ptr) {
-        string file_type;
+    dirvec.foreach_direntry([](const shared_direntry_ptr & a, void* ptr) {
         mode_t mode = a->mode();
 #if 0
+        string file_type;
         switch (mode & S_IFMT) {
             case S_IFREG:
                 file_type = "regular file";
@@ -83,5 +85,8 @@ int main() {
         return true;
     }, (void *)0xdeadbeef);
 
+    int file_cnt, dir_cnt;
+    dirvec.get_count(&file_cnt, &dir_cnt);
+    cout << "count: files = " << file_cnt << " dirs = " << dir_cnt << endl;
     return 0;
 }

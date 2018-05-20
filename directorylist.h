@@ -40,8 +40,8 @@ protected:
     timestruc_t     entry_ctime; // Last status change time
 };
 
-using shared_direntry = std::shared_ptr<directoryentry>;
-using direntry_vec = std::vector<shared_direntry>;
+using shared_direntry_ptr = std::shared_ptr<directoryentry>;
+using direntry_vec = std::vector<shared_direntry_ptr>;
 
 class directoryvec {
 public:
@@ -50,19 +50,22 @@ public:
 
     size_t          size() const;
     void            clear();
+    void            get_count(int* files, int* dirs = nullptr);
 
     bool            add_entry(const std::string & name, mode_t mode,
                               uid_t uid, gid_t gid, off_t size, const timestruc_t & atime,
                               const timestruc_t & mtime, const timestruc_t & ctime);
 
-    using entry_handler = std::function<bool(const shared_direntry &, void*)>;
-    using compare_handler = std::function<bool(shared_direntry, shared_direntry)>;
+    using entry_handler = std::function<bool(const shared_direntry_ptr &, void*)>;
+    using compare_handler = std::function<bool(shared_direntry_ptr, shared_direntry_ptr)>;
 
     bool            foreach_direntry(entry_handler callback, void* ptr = nullptr);
     bool            sort(compare_handler compare);
 
 protected:
     direntry_vec    directory_vec;
+    uint            count_files = 0;
+    uint            count_dirs  = 0;
 };
 
 bool enumerate_directory(const std::string& path, direntry_vec & dirvec);
