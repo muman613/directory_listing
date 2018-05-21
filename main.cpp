@@ -29,14 +29,15 @@ int main(int argc, char* argv[]) {
         return (strcasecmp(a->name().c_str(), b->name().c_str()) == -1);
     });
 
-    dirvec.set_show_hidden(true);
+    dirvec.calculate_column_widths();
+
+    //dirvec.set_show_hidden(true);
     cout << dirvec  ;
 
     int file_cnt, dir_cnt;
     dirvec.get_count(&file_cnt, &dir_cnt);
     cout << "count: files = " << file_cnt << " dirs = " << dir_cnt << endl;
 
-    dirvec.calculate_column_widths();
 
     return 0;
 }

@@ -1,6 +1,8 @@
-//
-// Created by muman on 5/19/2018.
-//
+/**
+ * @file    directorylist.h
+ * @author  Michael A. Uman
+ * @date    May 20, 2018
+ */
 
 #ifndef DIRLIST_DIRECTORYLIST_H
 #define DIRLIST_DIRECTORYLIST_H
@@ -13,9 +15,10 @@
 #include <memory>
 #include <functional>
 #include <dirent.h>
-#include <time.h>
-#include <stdint.h>
+#include <ctime>
+#include <cstdint>
 
+class directoryvec;
 
 class directoryentry {
 public:
@@ -41,6 +44,8 @@ public:
     const std::string   ctime_str() const;
 
 protected:
+    friend class directoryvec;
+
     friend std::ostream & operator << (std::ostream & out, const directoryentry & entry);
     
     std::string     time_t_to_string(time_t t) const;

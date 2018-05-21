@@ -12,6 +12,7 @@
 #include <memory>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 #include "directorylist.h"
 
 using namespace std;
@@ -101,7 +102,7 @@ string directoryentry::mode_str() const {
 
 ostream & operator << (ostream & out, const directoryentry & entry) {
     out << entry.mode_str() << " " << entry.entry_uid << " " <<
-        entry.entry_gid << " " << entry.entry_size << " " <<
+        entry.entry_gid << " " << std::setw(12) << entry.entry_size << " " <<
         entry.mtime_str() << " " << entry.entry_name;
     return out;
 }
@@ -282,7 +283,10 @@ void directoryvec::set_show_hidden(bool value) {
 std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
     dirvec.foreach_direntry([&](const shared_direntry_ptr & a, void* ptr) {
         if (dirvec.show_hidden || (a->name()[0] != '.')) {
-            out << *a << endl;
+            out << a->mode_str() << " " << a->uid() << " " <<
+                a->gid() << " " << std::setw(dirvec.column_widths[3]) << a->size() << " " <<
+                a->mtime_str() << " " << a->name() << endl;
+            //out << *a << endl;
         }
         return true;
     }, nullptr);
