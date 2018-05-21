@@ -26,9 +26,24 @@ public:
 
     const std::string&  name() const;
     mode_t              mode() const;
+    std::string         mode_str() const;
+    uid_t               uid() const;
+    std::string         uid_str() const;
+    gid_t               gid() const;
+    std::string         gid_str() const;
+    off_t               size() const;
+    std::string         size_str() const;
+    const timestruc_t & atime() const;
+    const timestruc_t & mtime() const;
+    const timestruc_t & ctime() const;
+    const std::string   atime_str() const;
+    const std::string   mtime_str() const;
+    const std::string   ctime_str() const;
 
 protected:
-    friend class directoryvec;
+    friend std::ostream & operator << (std::ostream & out, const directoryentry & entry);
+    
+    std::string     time_t_to_string(time_t t) const;
 
     std::string     entry_name;
     mode_t          entry_mode; // One of
@@ -42,6 +57,7 @@ protected:
 
 using shared_direntry_ptr = std::shared_ptr<directoryentry>;
 using direntry_vec = std::vector<shared_direntry_ptr>;
+using size_t_vec = std::vector<size_t>;
 
 class directoryvec {
 public:
@@ -62,12 +78,13 @@ public:
     bool            foreach_direntry(entry_handler callback, void* ptr = nullptr);
     bool            sort(compare_handler compare);
 
+    bool            calculate_column_widths();
+
 protected:
     direntry_vec    directory_vec;
     uint            count_files = 0;
     uint            count_dirs  = 0;
+    size_t_vec      column_widths = { 0, 0, 0, 0, 0, 0, 0 };
 };
-
-bool enumerate_directory(const std::string& path, direntry_vec & dirvec);
 
 #endif //DIRLIST_DIRECTORYLIST_H

@@ -4,29 +4,6 @@
 
 using namespace std;
 
-std::string get_mode_string(mode_t mode) {
-    std::string smode;
-
-    if (S_ISREG(mode)) {
-        smode += "-";
-    } else if (S_ISDIR(mode)) {
-        smode += "d";
-    } else if (S_ISLNK(mode)) {
-        smode += "l";
-    }
-
-    smode += (mode & S_IRUSR)?"r":"-";
-    smode += (mode & S_IWUSR)?"w":"-";
-    smode += (mode & S_IXUSR)?"x":"-";
-    smode += (mode & S_IRGRP)?"r":"-";
-    smode += (mode & S_IWGRP)?"w":"-";
-    smode += (mode & S_IXGRP)?"x":"-";
-    smode += (mode & S_IROTH)?"r":"-";
-    smode += (mode & S_IWOTH)?"w":"-";
-    smode += (mode & S_IXOTH)?"x":"-";
-
-    return smode;
-}
 bool simple_callback(const shared_direntry_ptr & entry, void* ptr) {
     cout << "name " << entry->name() << " mode " << entry->mode() << endl;
     return true;
@@ -49,6 +26,7 @@ int main() {
 
     dirvec.foreach_direntry([](const shared_direntry_ptr & a, void* ptr) {
         cout << "name " << a->name() << " ptr " << ptr << endl;
+        cout << *a << endl;
         return true;
     }, (void *)0xdeadbeef);
 
@@ -80,7 +58,8 @@ int main() {
         }
 #endif
 
-        cout << get_mode_string(mode) << " " << a->name() << " ptr " << ptr << endl;
+        //cout << a->mode_str() << " " << a->name() << " ptr " << ptr << endl;
+        cout << *a << endl;
 
         return true;
     }, (void *)0xdeadbeef);
@@ -88,5 +67,8 @@ int main() {
     int file_cnt, dir_cnt;
     dirvec.get_count(&file_cnt, &dir_cnt);
     cout << "count: files = " << file_cnt << " dirs = " << dir_cnt << endl;
+
+    dirvec.calculate_column_widths();
+
     return 0;
 }
