@@ -100,8 +100,9 @@ string directoryentry::mode_str() const {
 
 
 ostream & operator << (ostream & out, const directoryentry & entry) {
-    out << entry.mode_str() << " " << entry.entry_name << " " << entry.entry_size <<
-        " " << entry.entry_uid << " " << entry.entry_gid << " " << entry.atime_str();
+    out << entry.mode_str() << " " << entry.entry_uid << " " <<
+        entry.entry_gid << " " << entry.entry_size << " " <<
+        entry.mtime_str() << " " << entry.entry_name;
     return out;
 }
 
@@ -137,7 +138,7 @@ const timestruc_t &directoryentry::ctime() const {
 
 std::string directoryentry::time_t_to_string(time_t t) const {
     char buf[64];
-    strftime(buf, 64, "%b %e %H:%M", gmtime(&t));
+    strftime(buf, 64, "%b %e %H:%M", localtime(&t));
     return string(buf);
 }
 
@@ -272,4 +273,19 @@ bool directoryvec::calculate_column_widths() {
     cout << endl;
 
     return true;
+}
+
+void directoryvec::set_show_hidden(bool value) {
+    show_hidden = value;
+}
+
+std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
+    dirvec.foreach_direntry([&](const shared_direntry_ptr & a, void* ptr) {
+        if (dirvec.show_hidden || (a->name()[0] != '.')) {
+            out << *a << endl;
+        }
+        return true;
+    }, nullptr);
+
+    return out;
 }

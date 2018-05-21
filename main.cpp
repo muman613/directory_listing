@@ -1,4 +1,5 @@
 #include <iostream>
+#include <strings.h>
 #include "directorylist.h"
 #include "directory_enumerator.h"
 
@@ -12,8 +13,37 @@ bool simple_callback(const shared_direntry_ptr & entry, void* ptr) {
  *
  * @return
  */
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        cerr << "Must specify path to list" << endl;
+        return 10;
+    }
+
+    std::string scan_path = argv[1];
+
+    cout << "Scanning directory " << scan_path << endl;
+
     directoryvec        dirvec;
+    enumerate_directory(scan_path, dirvec);
+    dirvec.sort([](shared_direntry_ptr a, shared_direntry_ptr b) {
+        return (strcasecmp(a->name().c_str(), b->name().c_str()) == -1);
+    });
+
+    dirvec.set_show_hidden(true);
+    cout << dirvec  ;
+
+    int file_cnt, dir_cnt;
+    dirvec.get_count(&file_cnt, &dir_cnt);
+    cout << "count: files = " << file_cnt << " dirs = " << dir_cnt << endl;
+
+    dirvec.calculate_column_widths();
+
+    return 0;
+}
+
+#if 0
+void test_directory_vec() {
+    directoryvec dirvec;
 
     cout << "Hello, World!" << std::endl;
 
@@ -37,38 +67,5 @@ int main() {
     dirvec.foreach_direntry(simple_callback, nullptr);
 
     dirvec.clear();
-
-    cout << "Scanning directory C:\\Users\\muman\\" << endl;
-
-    enumerate_directory("C:\\Users\\muman\\", dirvec);
-    dirvec.foreach_direntry([](const shared_direntry_ptr & a, void* ptr) {
-        mode_t mode = a->mode();
-#if 0
-        string file_type;
-        switch (mode & S_IFMT) {
-            case S_IFREG:
-                file_type = "regular file";
-                break;
-            case S_IFDIR:
-                file_type = "directory";
-                break;
-            default:
-                file_type = "unknown";
-                break;
-        }
-#endif
-
-        //cout << a->mode_str() << " " << a->name() << " ptr " << ptr << endl;
-        cout << *a << endl;
-
-        return true;
-    }, (void *)0xdeadbeef);
-
-    int file_cnt, dir_cnt;
-    dirvec.get_count(&file_cnt, &dir_cnt);
-    cout << "count: files = " << file_cnt << " dirs = " << dir_cnt << endl;
-
-    dirvec.calculate_column_widths();
-
-    return 0;
 }
+#endif

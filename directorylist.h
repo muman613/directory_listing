@@ -80,11 +80,16 @@ public:
 
     bool            calculate_column_widths();
 
+    void            set_show_hidden(bool value);
+
 protected:
+    friend std::ostream & operator << (std::ostream & out, directoryvec & entry);
+
     direntry_vec    directory_vec;
-    uint            count_files = 0;
-    uint            count_dirs  = 0;
-    size_t_vec      column_widths = { 0, 0, 0, 0, 0, 0, 0 };
+    uint            count_files     = 0;
+    uint            count_dirs      = 0;
+    size_t_vec      column_widths   = { 0, 0, 0, 0, 0, 0, 0 };
+    bool            show_hidden     = false;
 };
 
 #endif //DIRLIST_DIRECTORYLIST_H
