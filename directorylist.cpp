@@ -14,6 +14,7 @@
 #include <sstream>
 #include <iomanip>
 #include "directorylist.h"
+#include "colordefs.h"
 
 using namespace std;
 
@@ -292,33 +293,58 @@ void directoryvec::set_long_format(bool value) {
  * @return          ostream
  */
 std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
+    size_t name_size;
+    string name;
+
+    if (dirvec.show_hidden) {
+        name_size = std::max(dirvec.reg_fname_width, dirvec.hid_fname_width);
+    } else {
+        name_size = dirvec.reg_fname_width;
+    }
+
     if (dirvec.long_format) {
         dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
             if (dirvec.show_hidden || (a->name()[0] != '.')) {
+                if (dirvec.enable_color) {
+                    if (S_ISDIR(a->mode())) {
+                        name = color::blue(a->name(), true);
+                        //ns += 9;
+                    } else {
+                        name = a->name();
+                    }
+                } else {
+                    name = a->name();
+                }
                 out << a->mode_str() << " " <<
                     std::setw(dirvec.uid_width) << a->uid() << " " <<
                     std::setw(dirvec.gid_width) << a->gid() << " " <<
                     std::setw(dirvec.size_width) << a->size() << " " <<
                     std::setw(dirvec.time_width) << a->mtime_str() << " " <<
-                    a->name() << endl;
+                    name << endl;
             }
             return true;
         });
     } else {
-        size_t name_size;
-
-        if (dirvec.show_hidden) {
-            name_size = std::max(dirvec.reg_fname_width, dirvec.hid_fname_width);
-        } else {
-            name_size = dirvec.reg_fname_width;
-        }
 
         int column_count = (int)(dirvec.line_length / name_size);
         int cur_col = 0;
 
         dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
             if (dirvec.show_hidden || (a->name()[0] != '.')) {
-                out << std::left << std::setw(name_size) << a->name() << " ";
+       //         string name;
+                int ns = name_size;
+
+                if (dirvec.enable_color) {
+                    if (S_ISDIR(a->mode())) {
+                        name = color::blue(a->name(), true);
+                        ns += 9;
+                    } else {
+                        name = a->name();
+                    }
+                } else {
+                    name = a->name();
+                }
+                out << std::left << std::setw(ns) << name << " ";
                 cur_col++;
             }
             if (cur_col == column_count) {

@@ -99,6 +99,7 @@ protected:
     //size_t_vec      column_widths   = { 0, 0, 0, 0, 0, 0, 0 };
     bool            show_hidden     = false;
     bool            long_format     = false;
+    bool            enable_color    = true;
     size_t          mode_width      = 0;
     size_t          uid_width       = 0;
     size_t          gid_width       = 0;
