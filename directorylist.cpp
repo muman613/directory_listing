@@ -30,7 +30,7 @@ using namespace std;
  * @param ctime
  */
 directoryentry::directoryentry(const std::string & name, mode_t mode, uid_t uid, gid_t gid, off_t size,
-                               const timestruc_t &  atime, const timestruc_t &  mtime, const timestruc_t &  ctime)
+                               const timespec &  atime, const timespec &  mtime, const timespec &  ctime)
 {
     entry_name      = name;
     entry_mode      = mode;
@@ -125,15 +125,15 @@ std::string directoryentry::size_str() const {
     return size_str.str();
 }
 
-const timestruc_t &directoryentry::atime() const {
+const timespec & directoryentry::atime() const {
     return entry_atime;
 }
 
-const timestruc_t &directoryentry::mtime() const {
+const timespec & directoryentry::mtime() const {
     return entry_mtime;
 }
 
-const timestruc_t &directoryentry::ctime() const {
+const timespec & directoryentry::ctime() const {
     return entry_ctime;
 }
 
@@ -173,6 +173,25 @@ size_t directoryvec::size() const {
 }
 
 /**
+ * Update column width vectors with sizes from the passed entry.
+ *
+ * @param entry Shared pointer to directory entry to add to column_widths vector
+ */
+void directoryvec::update_column_widths(const shared_direntry_ptr & entry) {
+    mode_width = std::max(entry->mode_str().length(),  mode_width);
+    uid_width  = std::max(entry->uid_str().length(),   uid_width);
+    gid_width  = std::max(entry->gid_str().length(),   gid_width);
+    size_width = std::max(entry->size_str().length(),  size_width);
+    time_width = std::max(entry->atime_str().length(), time_width);
+    std::string name = entry->name();
+    if ((name != "..") && (name != ".") && (name[0] == '.')) {
+        hid_fname_width = std::max(name.length(), hid_fname_width);
+    } else {
+        reg_fname_width = std::max(name.length(), reg_fname_width);
+    }
+}
+
+/**
  * Add an entry to the directory.
  *
  * @param name      File name
@@ -189,13 +208,15 @@ size_t directoryvec::size() const {
  *
  */
 bool directoryvec::add_entry(const std::string & name, mode_t mode, uid_t uid, gid_t gid, off_t size,
-                             const timestruc_t & atime, const timestruc_t & mtime, const timestruc_t &  ctime) {
+                             const timespec & atime, const timespec & mtime, const timespec &  ctime) {
     shared_direntry_ptr entry(new directoryentry(name, mode, uid, gid, size, atime, mtime, ctime));
     if (entry) {
-        count_dirs += (S_ISDIR(mode))?1:0;
-        count_files += (S_ISREG(mode))?1:0;
+        count_dirs   += (S_ISDIR(mode))?1:0;
+        count_files  += (S_ISREG(mode))?1:0;
+        count_hidden += ((name != "..") && (name != ".") && (name[0] == '.'))?1:0;
 
         directory_vec.push_back(entry);
+        update_column_widths(entry);
         return true;
     }
 
@@ -219,14 +240,15 @@ bool directoryvec::foreach_direntry(directoryvec::entry_handler callback, void* 
 /**
  * Sort directory using callback or lambda function.
  *
- * @param compare
- * @return
+ * @param compare   Function or lambda taking two shared_direntry_ptr to compare
+ *                  for sorting.
+ * @return          true
  */
 bool directoryvec::sort(directoryvec::compare_handler compare) {
 
     std::sort(directory_vec.begin(), directory_vec.end(), compare);
 
-    return false;
+    return true;
 }
 
 /**
@@ -235,61 +257,79 @@ bool directoryvec::sort(directoryvec::compare_handler compare) {
 
 void directoryvec::clear() {
     directory_vec.clear();
-    count_files = count_dirs = 0;
-    column_widths = { 0, 0, 0, 0, 0, 0, 0 };
+    count_files = count_dirs = count_hidden = 0;
+    mode_width = uid_width = gid_width = size_width = time_width = reg_fname_width = hid_fname_width = 0;
 }
 
-void directoryvec::get_count(int *files, int *dirs) {
+void directoryvec::get_count(int *files, int *dirs, int *hidden) {
     if (files) {
         *files = count_files;
     }
     if (dirs) {
         *dirs = count_dirs;
     }
+    if (hidden) {
+        *hidden = count_hidden;
+    }
 }
 
-/**
- * Calculate the widths of each field in the output.
- *
- * @return true
- */
-
-bool directoryvec::calculate_column_widths() {
-    column_widths = { 0, 0, 0, 0, 0, 0, 0 };
-
-    foreach_direntry([=](const shared_direntry_ptr & entry, void * ptr) {
-        column_widths[0] = std::max(entry->mode_str().length(), column_widths[0]);
-        column_widths[1] = std::max(entry->uid_str().length(), column_widths[1]);
-        column_widths[2] = std::max(entry->gid_str().length(), column_widths[2]);
-        column_widths[3] = std::max(entry->size_str().length(), column_widths[3]);
-        column_widths[4] = std::max(entry->atime_str().length(), column_widths[4]);
-        column_widths[5] = std::max(entry->name().length(), column_widths[5]);
-
-        return false;
-    }, nullptr);
-
-    for (const auto col : column_widths) {
-        cout << col << " ";
-    }
-    cout << endl;
-
-    return true;
+void directoryvec::set_line_length(size_t value) {
+    line_length = value;
 }
 
 void directoryvec::set_show_hidden(bool value) {
     show_hidden = value;
 }
 
+void directoryvec::set_long_format(bool value) {
+    long_format = value;
+}
+/**
+ * Output directory list to ostream
+ *
+ * @param out       ostream to display output on.
+ * @param dirvec    directory vector to display
+ * @return          ostream
+ */
 std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
-    dirvec.foreach_direntry([&](const shared_direntry_ptr & a, void* ptr) {
-        if (dirvec.show_hidden || (a->name()[0] != '.')) {
-            out << a->mode_str() << " " << a->uid() << " " <<
-                a->gid() << " " << std::setw(dirvec.column_widths[3]) << a->size() << " " <<
-                a->mtime_str() << " " << a->name() << endl;
-            //out << *a << endl;
-        }
-        return true;
-    }, nullptr);
+    if (dirvec.long_format) {
+        dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
+            if (dirvec.show_hidden || (a->name()[0] != '.')) {
+                out << a->mode_str() << " " <<
+                    std::setw(dirvec.uid_width) << a->uid() << " " <<
+                    std::setw(dirvec.gid_width) << a->gid() << " " <<
+                    std::setw(dirvec.size_width) << a->size() << " " <<
+                    std::setw(dirvec.time_width) << a->mtime_str() << " " <<
+                    a->name() << endl;
+            }
+            return true;
+        });
+    } else {
+        size_t name_size;
 
+        if (dirvec.show_hidden) {
+            name_size = std::max(dirvec.reg_fname_width, dirvec.hid_fname_width);
+        } else {
+            name_size = dirvec.reg_fname_width;
+        }
+
+        int column_count = (int)(dirvec.line_length / name_size);
+        int cur_col = 0;
+
+        dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
+            if (dirvec.show_hidden || (a->name()[0] != '.')) {
+                out << std::left << std::setw(name_size) << a->name() << " ";
+                cur_col++;
+            }
+            if (cur_col == column_count) {
+                out << endl;
+                cur_col = 0;
+            }
+            return true;
+        });
+        if (cur_col != 0) {
+            out << endl;
+        }
+    }
     return out;
 }

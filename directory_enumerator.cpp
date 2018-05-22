@@ -28,17 +28,12 @@ bool enumerate_directory(const std::string& path, directoryvec & dirvec) {
     if (_dir) {
         while ((_entry = readdir(_dir)) != nullptr) {
             std::string entry_name = _entry->d_name;
-            if ((entry_name != ".") && (entry_name != "..")) {
-                std::string fullpath = path + "/" + entry_name;
+            std::string fullpath   = path + "/" + entry_name;
 
-                struct stat st = {};
-                if (stat(fullpath.c_str(), &st) == 0) {
-#ifdef _DEBUG
-                    cout << "stat'd entry " << entry_name << endl;
-#endif
-                    dirvec.add_entry(entry_name, st.st_mode, st.st_uid, st.st_gid,
-                                     st.st_size, st.st_atim, st.st_mtim, st.st_ctim);
-                }
+            struct stat st = {};
+            if (stat(fullpath.c_str(), &st) == 0) {
+                dirvec.add_entry(entry_name, st.st_mode, st.st_uid, st.st_gid,
+                                 st.st_size, st.st_atim, st.st_mtim, st.st_ctim);
             }
         }
         closedir(_dir);
