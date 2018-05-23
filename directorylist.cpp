@@ -31,7 +31,7 @@ using namespace std;
  * @param ctime
  */
 directoryentry::directoryentry(const std::string & name, mode_t mode, uid_t uid, gid_t gid, off_t size,
-                               const timespec &  atime, const timespec &  mtime, const timespec &  ctime)
+                               const time_t &  atime, const time_t &  mtime, const time_t &  ctime)
 {
     entry_name      = name;
     entry_mode      = mode;
@@ -83,9 +83,16 @@ string directoryentry::mode_str() const {
         smode += "-";
     } else if (S_ISDIR(entry_mode)) {
         smode += "d";
-    } else if (S_ISLNK(entry_mode)) {
+    }
+#ifdef __MINGW32__
+    else {
+        smode += "-";
+    }
+#else
+    else if (S_ISLNK(entry_mode)) {
         smode += "l";
     }
+#endif
 
     smode += (entry_mode & S_IRUSR)?"r":"-";
     smode += (entry_mode & S_IWUSR)?"w":"-";
@@ -126,15 +133,15 @@ std::string directoryentry::size_str() const {
     return size_str.str();
 }
 
-const timespec & directoryentry::atime() const {
+const time_t & directoryentry::atime() const {
     return entry_atime;
 }
 
-const timespec & directoryentry::mtime() const {
+const time_t & directoryentry::mtime() const {
     return entry_mtime;
 }
 
-const timespec & directoryentry::ctime() const {
+const time_t & directoryentry::ctime() const {
     return entry_ctime;
 }
 
@@ -145,15 +152,15 @@ std::string directoryentry::time_t_to_string(time_t t) const {
 }
 
 const std::string directoryentry::atime_str() const {
-    return time_t_to_string(entry_atime.tv_sec);
+    return time_t_to_string(entry_atime);
 }
 
 const std::string directoryentry::mtime_str() const {
-    return time_t_to_string(entry_mtime.tv_sec);
+    return time_t_to_string(entry_mtime);
 }
 
 const std::string directoryentry::ctime_str() const {
-    return time_t_to_string(entry_ctime.tv_sec);
+    return time_t_to_string(entry_ctime);
 }
 
 /**
@@ -209,7 +216,7 @@ void directoryvec::update_column_widths(const shared_direntry_ptr & entry) {
  *
  */
 bool directoryvec::add_entry(const std::string & name, mode_t mode, uid_t uid, gid_t gid, off_t size,
-                             const timespec & atime, const timespec & mtime, const timespec &  ctime) {
+                             const time_t & atime, const time_t & mtime, const time_t &  ctime) {
     shared_direntry_ptr entry(new directoryentry(name, mode, uid, gid, size, atime, mtime, ctime));
     if (entry) {
         count_dirs   += (S_ISDIR(mode))?1:0;
