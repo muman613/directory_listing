@@ -33,7 +33,7 @@ bool enumerate_directory(const std::string& path, directoryvec & dirvec) {
             struct stat st = {};
             if (stat(fullpath.c_str(), &st) == 0) {
                 dirvec.add_entry(entry_name, st.st_mode, st.st_uid, st.st_gid,
-                                 st.st_size, st.st_atim, st.st_mtim, st.st_ctim);
+                                 st.st_size, st.st_atime, st.st_mtime, st.st_ctime);
             }
         }
         closedir(_dir);
