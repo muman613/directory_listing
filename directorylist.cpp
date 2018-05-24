@@ -191,11 +191,18 @@ void directoryvec::update_column_widths(const shared_direntry_ptr & entry) {
     gid_width  = std::max(entry->gid_str().length(),   gid_width);
     size_width = std::max(entry->size_str().length(),  size_width);
     time_width = std::max(entry->atime_str().length(), time_width);
-    std::string name = entry->name();
+
+    std::string name    = entry->name();
+    bool space_in_name  = is_space_in_name(name);
+    size_t name_length  = name.length();
+    // add 2 to the name width to account for the two "'" characters printed.
+    if (space_in_name) {
+        name_length += 2;
+    }
     if ((name != "..") && (name != ".") && (name[0] == '.')) {
-        hid_fname_width = std::max(name.length(), hid_fname_width);
+        hid_fname_width = std::max(name_length, hid_fname_width);
     } else {
-        reg_fname_width = std::max(name.length(), reg_fname_width);
+        reg_fname_width = std::max(name_length, reg_fname_width);
     }
 }
 
@@ -219,9 +226,12 @@ bool directoryvec::add_entry(const std::string & name, mode_t mode, uid_t uid, g
                              const time_t & atime, const time_t & mtime, const time_t &  ctime) {
     shared_direntry_ptr entry(new directoryentry(name, mode, uid, gid, size, atime, mtime, ctime));
     if (entry) {
-        count_dirs   += (S_ISDIR(mode))?1:0;
+        count_dirs   += (!is_dot_or_dotdot(name) && S_ISDIR(mode))?1:0;
+//        if (S_ISDIR(mode)) {
+//            cout << "identified '" << name << "' as a directory" << endl;
+//        }
         count_files  += (S_ISREG(mode))?1:0;
-        count_hidden += ((name != "..") && (name != ".") && (name[0] == '.'))?1:0;
+        count_hidden += (!is_dot_or_dotdot(name) && (name[0] == '.'))?1:0;
 
         directory_vec.push_back(entry);
         update_column_widths(entry);
@@ -322,6 +332,10 @@ std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
                 } else {
                     name = a->name();
                 }
+                if (directoryvec::is_space_in_name(name)) {
+                    name = "'" + name + "'";
+                }
+
                 out << a->mode_str() << " " <<
                     std::setw(dirvec.uid_width) << a->uid() << " " <<
                     std::setw(dirvec.gid_width) << a->gid() << " " <<
@@ -338,7 +352,6 @@ std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
 
         dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
             if (dirvec.show_hidden || (a->name()[0] != '.')) {
-       //         string name;
                 int ns = name_size;
 
                 if (dirvec.enable_color) {
@@ -351,6 +364,10 @@ std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
                 } else {
                     name = a->name();
                 }
+                if (directoryvec::is_space_in_name(name)) {
+                    name = "'" + name + "'";
+                }
+
                 out << std::left << std::setw(ns) << name << " ";
                 cur_col++;
             }
@@ -365,4 +382,12 @@ std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
         }
     }
     return out;
+}
+
+bool directoryvec::is_dot_or_dotdot(const std::string &name) {
+    return ((name == ".") || (name == ".."));
+}
+
+bool directoryvec::is_space_in_name(const std::string &name) {
+    return (name.find_first_of(' ') != std::string::npos);
 }

@@ -110,6 +110,9 @@ public:
     void            set_show_hidden(bool value);
     void            set_long_format(bool value);
 
+    static bool     is_dot_or_dotdot(const std::string & name);
+    static bool     is_space_in_name(const std::string & name);
+
 protected:
     friend std::ostream & operator << (std::ostream & out, directoryvec & entry);
 
@@ -119,7 +122,6 @@ protected:
     uint            count_files     = 0;
     uint            count_dirs      = 0;
     uint            count_hidden    = 0;
-    //size_t_vec      column_widths   = { 0, 0, 0, 0, 0, 0, 0 };
     bool            show_hidden     = false;
     bool            long_format     = false;
     bool            enable_color    = true;
