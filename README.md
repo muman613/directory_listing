@@ -13,10 +13,18 @@ The project uses CLion as the `IDE` and `CMake` as the build system.
 
 ## Tested on
 
-* Linux gcc
-* Windows (Cygwin) gcc
+* Linux g++
+* Windows (Cygwin) g++
+* MinGW32 g++
 
-## Branches
+## Notes concerning ANSI color
 
-* mingw-build-branch
+This code outputs ANSI color codes to the console. Windows consoles
+have not 'traditionally' supported ANSI codes but newer console applications
+such as MSYS2 and ConEMU provide support.
 
+This code has been tested with:
+
+* Cygwin Bash MinTTY console
+* MSYS2 console
+* ConEMU console
