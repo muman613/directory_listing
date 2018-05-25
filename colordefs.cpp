@@ -5,49 +5,49 @@
 #include <string>
 #include "colordefs.h"
 
-using namespace std;
+//using namespace std;
+#define ESC_ASCII               "\x1b"
 
 namespace color {
-    const std::string   ESC         = string("\x1b");
-    const std::string   RESET       = ESC + "[0m";
+    const char *    RESET           = ESC_ASCII"[0m";
     namespace FG {
-        const std::string BLACK     = ESC + "[30m";
-        const std::string RED       = ESC + "[31m";
-        const std::string GREEN     = ESC + "[32m";
-        const std::string YELLOW    = ESC + "[33m";
-        const std::string BLUE      = ESC + "[34m";
-        const std::string MAGENTA   = ESC + "[35m";
-        const std::string CYAN      = ESC + "[36m";
-        const std::string WHITE     = ESC + "[37m";
+        const char * BLACK          = ESC_ASCII"[30m";
+        const char * RED            = ESC_ASCII"[31m";
+        const char * GREEN          = ESC_ASCII"[32m";
+        const char * YELLOW         = ESC_ASCII"[33m";
+        const char * BLUE           = ESC_ASCII"[34m";
+        const char * MAGENTA        = ESC_ASCII"[35m";
+        const char * CYAN           = ESC_ASCII"[36m";
+        const char * WHITE          = ESC_ASCII"[37m";
 
-        const std::string BOLD_BLACK    = ESC + "[90m";
-        const std::string BOLD_RED      = ESC + "[91m";
-        const std::string BOLD_GREEN    = ESC + "[92m";
-        const std::string BOLD_YELLOW   = ESC + "[93m";
-        const std::string BOLD_BLUE     = ESC + "[94m";
-        const std::string BOLD_MAGENTA  = ESC + "[95m";
-        const std::string BOLD_CYAN     = ESC + "[96m";
-        const std::string BOLD_WHITE    = ESC + "[97m";
+        const char * BOLD_BLACK     = ESC_ASCII"[90m";
+        const char * BOLD_RED       = ESC_ASCII"[91m";
+        const char * BOLD_GREEN     = ESC_ASCII"[92m";
+        const char * BOLD_YELLOW    = ESC_ASCII"[93m";
+        const char * BOLD_BLUE      = ESC_ASCII"[94m";
+        const char * BOLD_MAGENTA   = ESC_ASCII"[95m";
+        const char * BOLD_CYAN      = ESC_ASCII"[96m";
+        const char * BOLD_WHITE     = ESC_ASCII"[97m";
     }
 
     namespace BG {
-        const std::string BLACK     = ESC + "[40m";
-        const std::string RED       = ESC + "[41m";
-        const std::string GREEN     = ESC + "[42m";
-        const std::string YELLOW    = ESC + "[43m";
-        const std::string BLUE      = ESC + "[44m";
-        const std::string MAGENTA   = ESC + "[45m";
-        const std::string CYAN      = ESC + "[46m";
-        const std::string WHITE     = ESC + "[47m";
+        const char * RED                = ESC_ASCII"[41m";
+        const char * GREEN              = ESC_ASCII"[42m";
+        const char * YELLOW             = ESC_ASCII"[43m";
+        const char * BLACK              = ESC_ASCII"[40m";
+        const char * BLUE               = ESC_ASCII"[44m";
+        const char * MAGENTA            = ESC_ASCII"[45m";
+        const char * CYAN               = ESC_ASCII"[46m";
+        const char * WHITE              = ESC_ASCII"[47m";
 
-        const std::string BOLD_BLACK    = ESC + "[100m";
-        const std::string BOLD_RED      = ESC + "[101m";
-        const std::string BOLD_GREEN    = ESC + "[102m";
-        const std::string BOLD_YELLOW   = ESC + "[103m";
-        const std::string BOLD_BLUE     = ESC + "[104m";
-        const std::string BOLD_MAGENTA  = ESC + "[105m";
-        const std::string BOLD_CYAN     = ESC + "[106m";
-        const std::string BOLD_WHITE    = ESC + "[107m";
+        const char * BOLD_RED           = ESC_ASCII"[101m";
+        const char * BOLD_GREEN         = ESC_ASCII"[102m";
+        const char * BOLD_YELLOW        = ESC_ASCII"[103m";
+        const char * BOLD_BLUE          = ESC_ASCII"[104m";
+        const char * BOLD_BLACK         = ESC_ASCII"[100m";
+        const char * BOLD_MAGENTA       = ESC_ASCII"[105m";
+        const char * BOLD_CYAN          = ESC_ASCII"[106m";
+        const char * BOLD_WHITE         = ESC_ASCII"[107m";
     }
 
     std::string black(const std::string& msg, bool bold) {
