@@ -18,34 +18,21 @@
 #include <ctime>
 #include <cstdint>
 
-/*
-  struct stat {
-    _dev_t st_dev;
-    _ino_t st_ino;
-    unsigned short st_mode;
-    short st_nlink;
-    short st_uid;
-    short st_gid;
-    _dev_t st_rdev;
-    _off_t st_size;
-    time_t st_atime;
-    time_t st_mtime;
-    time_t st_ctime;
-  };
-*/
-
 #ifdef __MINGW32__
 typedef short           uid_t;
 typedef short           gid_t;
 typedef unsigned short  mode_t;
 typedef unsigned int    uint;
 
+// these definitions are required for some MinGW compilers
+#ifndef S_IRGRP
 #define S_IRGRP     0040
 #define S_IWGRP     0020
 #define S_IXGRP     0010
 #define S_IROTH     0004
 #define S_IWOTH     0002
 #define S_IXOTH     0001
+#endif
 #endif
 
 // flags used to do_sync_ls
@@ -122,11 +109,9 @@ public:
 
     bool            foreach_direntry(entry_handler callback, void* ptr = nullptr);
     bool            sort(compare_handler compare);
+    bool            sort();
 
     void            set_line_length(size_t value);
-    void            set_show_hidden(bool value);
-    void            set_long_format(bool value);
-
     void            set_flags(unsigned int value);
 
     static bool     is_dot_or_dotdot(const std::string & name);
@@ -142,9 +127,9 @@ protected:
     uint            count_dirs      = 0;
     uint            count_hidden    = 0;
     unsigned int    flags           = 0;
-    bool            show_hidden     = false;
-    bool            long_format     = false;
-    bool            enable_color    = true;
+    size_t          line_length     = 80; // default to 80 column width
+
+    // 'ls' field widths
     size_t          mode_width      = 0;
     size_t          uid_width       = 0;
     size_t          gid_width       = 0;
@@ -152,7 +137,6 @@ protected:
     size_t          time_width      = 0;
     size_t          reg_fname_width = 0;
     size_t          hid_fname_width = 0;
-    size_t          line_length     = 80;
 };
 
 #endif //DIRLIST_DIRECTORYLIST_H

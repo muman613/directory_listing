@@ -8,26 +8,51 @@
 using namespace std;
 
 
+void show_help(const std::string& cmd) {
+    cout << cmd << " [-h] [-l] [-R] <path>" << endl;
+}
 
-static bool parse_args(int argc, char* argv[], std::string & path, bool & show_hidden, bool & long_format) {
+/**
+ * Parse commandline arguments here.
+ *
+ * @param argc
+ * @param argv
+ * @param path
+ * @param ls_format
+ * @return  true if arguments parsed without trouble, otherwise false
+ */
+static bool parse_args(int argc, char* argv[], std::string & path, unsigned int & ls_format) {
     if (argc >= 2) {
         int i;
 
+        ls_format = 0; // init format
+
         for (i = 1 ; i < argc ; i++) {
             if (strcmp(argv[i], "-h") == 0) {
-                show_hidden = true;
+                ls_format |= sync_ls_flag_all_no_dot;
             } else if (strcmp(argv[i], "-l") == 0) {
-                long_format = true;
+                ls_format |= sync_ls_flag_long;
+            } else if (strcmp(argv[i], "-R") == 0) {
+                ls_format |= sync_ls_flag_recursive;
+            } else if (strcmp(argv[i], "-S") == 0) {
+                ls_format |= sync_ls_flag_sort_size;
+            } else if (strcmp(argv[i], "-t") == 0) {
+                ls_format |= sync_ls_flag_sort_date;
+            } else if (strcmp(argv[i], "-A") == 0) {
+                ls_format |= sync_ls_flag_all_no_dot;
+            } else if (strcmp(argv[i], "-a") == 0) {
+                ls_format |= sync_ls_flag_all;
             } else {
                 path = argv[i];
             }
         }
+        // path MUST be specified
         if (path.empty()) {
-            cout << argv[0] << " [-h] <path>" << endl;
+            show_help(argv[0]);
             return false;
         }
     } else {
-        cout << argv[0] << " [-h] <path>" << endl;
+        show_help(argv[0]);
         return false;
     }
 
@@ -40,22 +65,20 @@ static bool parse_args(int argc, char* argv[], std::string & path, bool & show_h
  */
 int main(int argc, char* argv[]) {
     std::string scan_path; // = argv[1];
-    bool show_hidden = false,
-         long_format = false;
+    unsigned int ls_format = 0;
 
-    if (parse_args(argc, argv, scan_path, show_hidden, long_format)) {
+    if (parse_args(argc, argv, scan_path, ls_format)) {
         cout << "Scanning directory " << scan_path << endl;
 
         directoryvec        dirvec;
-        enumerate_directory(scan_path, dirvec);
-        dirvec.sort([](shared_direntry_ptr a, shared_direntry_ptr b) {
-            return (strcasecmp(a->name().c_str(), b->name().c_str()) < 0);
-        });
 
+        dirvec.set_flags(ls_format);
+        enumerate_directory(scan_path, dirvec);
+//        dirvec.sort([](shared_direntry_ptr a, shared_direntry_ptr b) {
+//            return (strcasecmp(a->name().c_str(), b->name().c_str()) < 0);
+//        });
+        dirvec.sort();
         dirvec.set_line_length(132);
-        dirvec.set_show_hidden(show_hidden);
-        dirvec.set_long_format(long_format);
-        dirvec.set_flags(sync_ls_flag_all);
 
         cout << dirvec  ;
 

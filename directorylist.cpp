@@ -269,6 +269,17 @@ bool directoryvec::sort(directoryvec::compare_handler compare) {
     return true;
 }
 
+bool directoryvec::sort() {
+    sort([&](const shared_direntry_ptr & a, const shared_direntry_ptr & b) -> bool {
+        if ((flags & sync_ls_flag_sort_date) != 0) {
+            return (a->entry_mtime < b->entry_mtime);
+        }
+        if ((flags & sync_ls_flag_sort_size) != 0) {
+            return (a->entry_size < b->entry_size);
+        }
+        return (strcmp(a->name().c_str(), b->name().c_str()) < 0);
+    });
+}
 /**
  * Clear the directoryvec object to initial state.
  */
@@ -277,6 +288,7 @@ void directoryvec::clear() {
     directory_vec.clear();
     count_files = count_dirs = count_hidden = 0;
     mode_width = uid_width = gid_width = size_width = time_width = reg_fname_width = hid_fname_width = 0;
+    flags = 0;
 }
 
 void directoryvec::get_count(int *files, int *dirs, int *hidden) {
@@ -295,95 +307,6 @@ void directoryvec::set_line_length(size_t value) {
     line_length = value;
 }
 
-void directoryvec::set_show_hidden(bool value) {
-    show_hidden = value;
-}
-
-void directoryvec::set_long_format(bool value) {
-    long_format = value;
-}
-/**
- * Output directory list to ostream
- *
- * @param out       ostream to display output on.
- * @param dirvec    directory vector to display
- * @return          ostream
- */
-std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
-    size_t name_size;
-    string name;
-
-    if (dirvec.show_hidden) {
-        name_size = std::max(dirvec.reg_fname_width, dirvec.hid_fname_width);
-    } else {
-        name_size = dirvec.reg_fname_width;
-    }
-
-    if (dirvec.long_format) {
-        dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
-            if (dirvec.show_hidden || (a->name()[0] != '.')) {
-                if (dirvec.enable_color) {
-                    if (S_ISDIR(a->mode())) {
-                        name = color::blue(a->name(), true);
-                        //ns += 9;
-                    } else {
-                        name = a->name();
-                    }
-                } else {
-                    name = a->name();
-                }
-                if (directoryvec::is_space_in_name(name)) {
-                    name = "'" + name + "'";
-                }
-
-                out << a->mode_str() << " " <<
-                    std::setw(dirvec.uid_width) << a->uid() << " " <<
-                    std::setw(dirvec.gid_width) << a->gid() << " " <<
-                    std::setw(dirvec.size_width) << a->size() << " " <<
-                    std::setw(dirvec.time_width) << a->mtime_str() << " " <<
-                    name << endl;
-            }
-            return true;
-        });
-    } else {
-
-        int column_count = (int)(dirvec.line_length / name_size);
-        int cur_col = 0;
-
-        dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
-            if (dirvec.show_hidden || (a->name()[0] != '.')) {
-                int ns = name_size;
-
-                if (dirvec.enable_color) {
-                    if (S_ISDIR(a->mode())) {
-                        name = color::blue(a->name(), true);
-                        ns += 9;
-                    } else {
-                        name = a->name();
-                    }
-                } else {
-                    name = a->name();
-                }
-                if (directoryvec::is_space_in_name(name)) {
-                    name = "'" + name + "'";
-                }
-
-                out << std::left << std::setw(ns) << name << " ";
-                cur_col++;
-            }
-            if (cur_col == column_count) {
-                out << endl;
-                cur_col = 0;
-            }
-            return true;
-        });
-        if (cur_col != 0) {
-            out << endl;
-        }
-    }
-    return out;
-}
-
 bool directoryvec::is_dot_or_dotdot(const std::string &name) {
     return ((name == ".") || (name == ".."));
 }
@@ -395,3 +318,99 @@ bool directoryvec::is_space_in_name(const std::string &name) {
 void directoryvec::set_flags(unsigned int value) {
     flags = value;
 }
+
+/**
+ * Output directory list to ostream
+ *
+ * @param out       ostream to display output on.
+ * @param dirvec    directory vector to display
+ * @return          ostream
+ */
+std::ostream &operator<<(std::ostream &out,  directoryvec &dirvec) {
+    size_t name_size;
+    string name;
+
+    if ((dirvec.flags & sync_ls_flag_all) != 0) {
+        name_size = std::max(dirvec.reg_fname_width, dirvec.hid_fname_width);
+    } else {
+        name_size = dirvec.reg_fname_width;
+    }
+
+    if ((dirvec.flags & sync_ls_flag_long) != 0) {
+        dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
+            if ((dirvec.flags & sync_ls_flag_all|sync_ls_flag_all_no_dot) || (a->name()[0] != '.')) {
+                if ((!directoryvec::is_dot_or_dotdot(a->name())) || (dirvec.flags & sync_ls_flag_all)) {
+#ifdef ENABLE_COLOR
+                    if (dirvec.enable_color) {
+                        if (S_ISDIR(a->mode())) {
+                            name = color::blue(a->name(), true);
+                            //ns += 9;
+                        } else {
+                            name = a->name();
+                        }
+                    } else {
+                        name = a->name();
+                    }
+#else
+                    name = a->name();
+#endif
+                    if (directoryvec::is_space_in_name(name)) {
+                        name = "'" + name + "'";
+                    }
+
+                    out << a->mode_str() << " " <<
+                        std::setw(dirvec.uid_width) << a->uid() << " " <<
+                        std::setw(dirvec.gid_width) << a->gid() << " " <<
+                        std::setw(dirvec.size_width) << a->size() << " " <<
+                        std::setw(dirvec.time_width) << a->mtime_str() << " " <<
+                        name << endl;
+                }
+            }
+            return true;
+        });
+    } else {
+
+        int column_count = (int)(dirvec.line_length / name_size);
+        int cur_col = 0;
+
+        dirvec.foreach_direntry([&](const shared_direntry_ptr &a, void *ptr) -> bool {
+            if (((dirvec.flags & (sync_ls_flag_all|sync_ls_flag_all_no_dot)) != 0) || (a->name()[0] != '.')) {
+                if ((!directoryvec::is_dot_or_dotdot(a->name())) || ((dirvec.flags & sync_ls_flag_all) != 0)) {
+                    int ns = name_size;
+#ifdef ENABLE_COLOR
+                    if ((dirvec.flag & sync_ls_enable_color) != 0) {
+                        if (S_ISDIR(a->mode())) {
+                            name = color::blue(a->name(), true);
+                            ns += 9;
+                        } else {
+                            name = a->name();
+                        }
+                    } else {
+                        name = a->name();
+                    }
+#else
+                    name = a->name();
+#endif
+
+                    if (directoryvec::is_space_in_name(name)) {
+                        name = "'" + name + "'";
+                    }
+
+                    out << std::left << std::setw(ns) << name << " ";
+                    cur_col++;
+                }
+                if (cur_col == column_count) {
+                    out << endl;
+                    cur_col = 0;
+                }
+            }
+
+            return true;
+        });
+        if (cur_col != 0) {
+            out << endl;
+        }
+    }
+    return out;
+}
+
