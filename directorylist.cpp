@@ -75,7 +75,7 @@ off_t  directoryentry::size() const {
  *
  * @return  std::string
  */
- 
+
 string directoryentry::mode_str() const {
     string smode;
 
@@ -390,4 +390,8 @@ bool directoryvec::is_dot_or_dotdot(const std::string &name) {
 
 bool directoryvec::is_space_in_name(const std::string &name) {
     return (name.find_first_of(' ') != std::string::npos);
+}
+
+void directoryvec::set_flags(unsigned int value) {
+    flags = value;
 }

@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
         dirvec.set_line_length(132);
         dirvec.set_show_hidden(show_hidden);
         dirvec.set_long_format(long_format);
+        dirvec.set_flags(sync_ls_flag_all);
 
         cout << dirvec  ;
 

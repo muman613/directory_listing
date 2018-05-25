@@ -39,8 +39,25 @@ typedef short           uid_t;
 typedef short           gid_t;
 typedef unsigned short  mode_t;
 typedef unsigned int    uint;
+
+#define S_IRGRP     0040
+#define S_IWGRP     0020
+#define S_IXGRP     0010
+#define S_IROTH     0004
+#define S_IWOTH     0002
+#define S_IXOTH     0001
 #endif
 
+// flags used to do_sync_ls
+const unsigned int sync_ls_flag_long        = 0x001; // ls -l
+const unsigned int sync_ls_flag_dir         = 0x002; // ls -d
+const unsigned int sync_ls_flag_sort_size   = 0x004; // ls -S
+const unsigned int sync_ls_flag_sort_date   = 0x008; // ls -t
+const unsigned int sync_ls_flag_all         = 0x010; // ls -a
+const unsigned int sync_ls_flag_all_no_dot  = 0x020; // ls -A
+const unsigned int sync_ls_flag_recursive   = 0x040; // ls -R
+const unsigned int sync_ls_flag_dir_slash   = 0x080; // ls -m (corresponds to -p on Linux, but -p is already used)
+const unsigned int sync_ls_flag_color       = 0x100; // ls -C ??
 class directoryvec;
 
 class directoryentry {
@@ -70,7 +87,7 @@ protected:
     friend class directoryvec;
 
     friend std::ostream & operator << (std::ostream & out, const directoryentry & entry);
-    
+
     std::string     time_t_to_string(time_t t) const;
 
     std::string     entry_name;
@@ -110,6 +127,8 @@ public:
     void            set_show_hidden(bool value);
     void            set_long_format(bool value);
 
+    void            set_flags(unsigned int value);
+
     static bool     is_dot_or_dotdot(const std::string & name);
     static bool     is_space_in_name(const std::string & name);
 
@@ -122,6 +141,7 @@ protected:
     uint            count_files     = 0;
     uint            count_dirs      = 0;
     uint            count_hidden    = 0;
+    unsigned int    flags           = 0;
     bool            show_hidden     = false;
     bool            long_format     = false;
     bool            enable_color    = true;
